@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoseCraft - Create Your Personal Rose Day Website</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .animated-bg.classic-red {
+            background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+        }
+
+        .animated-bg.soft-pink {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .animated-bg.minimal {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .animated-bg.dark-romance {
+            background: linear-gradient(135deg, #2c1a3e 0%, #000000 100%);
+        }
+
+        .animated-bg.cute-cartoon {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        }
+
+        /* Floating Rose Petals */
+        .petal {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(ellipse at center, rgba(255, 105, 180, 0.8) 0%, rgba(255, 20, 147, 0.4) 100%);
+            border-radius: 50% 0 50% 0;
+            animation: fall linear infinite;
+            opacity: 0.7;
+            filter: blur(1px);
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Landing Screen */
+        .landing-screen {
+            text-align: center;
+            color: white;
+        }
+
+        .landing-screen h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease;
+        }
+
+        .landing-screen p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .rose-logo {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Buttons */
+        .btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c86dd7 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff5a8e 0%, #b85cc8 100%);
+        }
+
+        /* Builder Steps */
+        .builder-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .builder-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c86dd7 100%);
+            border-color: white;
+        }
+
+        .step.completed {
+            background: rgba(76, 175, 80, 0.6);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ff6b9d;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Theme Selection */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .theme-card {
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .theme-card:hover {
+            transform: scale(1.05);
+            border-color: #ff6b9d;
+        }
+
+        .theme-card.selected {
+            background: rgba(255, 107, 157, 0.3);
+            border-color: #ff6b9d;
+            box-shadow: 0 0 20px rgba(255, 107, 157, 0.5);
+        }
+
+        .theme-preview {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.5rem;
+            border-radius: 10px;
+        }
+
+        /* Rose Garden Builder */
+        .rose-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .rose-item {
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rose-item:hover {
+            transform: scale(1.1);
+        }
+
+        .rose-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        .rose-label {
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Preview Mode */
+        .preview-container {
+            text-align: center;
+        }
+
+        .preview-frame {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            min-height: 400px;
+        }
+
+        /* Share Section */
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .share-card {
+            padding: 1.5rem;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .share-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .share-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* View Mode */
+        .view-mode {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .view-mode.active {
+            display: block;
+        }
+
+        .view-header {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: white;
+        }
+
+        .view-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .view-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .roses-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .view-rose {
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 1rem;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .view-rose:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .view-rose.opened {
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .landing-screen h1 {
+                font-size: 2.5rem;
+            }
+
+            .rose-logo {
+                font-size: 3.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Utilities */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 2rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .color-white {
+            color: white;
+        }
+
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Number Input */
+        .number-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .number-input button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .number-input button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .number-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            min-width: 60px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg" id="animatedBg"></div>
+
+    <!-- Landing Screen -->
+    <div id="landingScreen" class="container">
+        <div class="landing-screen">
+            <div class="rose-logo">🌹</div>
+            <h1>RoseCraft</h1>
+            <p>Create a deeply personal rose-themed webpage for your loved ones</p>
+            <button class="btn btn-primary" onclick="startBuilder()">Create Your Rose Garden ✨</button>
+        </div>
+    </div>
+
+    <!-- Builder Section -->
+    <div id="builderSection" class="container hidden">
+        <div class="glass-card">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="stepIndicator1">1</div>
+                <div class="step" id="stepIndicator2">2</div>
+                <div class="step" id="stepIndicator3">3</div>
+                <div class="step" id="stepIndicator4">4</div>
+                <div class="step" id="stepIndicator5">5</div>
+            </div>
+
+            <!-- Step 1: Basic Info -->
+            <div class="builder-section active" id="step1">
+                <h2 class="text-center color-white mb-2">Let's Get Started 💕</h2>
+                <div class="form-group">
+                    <label>Recipient's Name</label>
+                    <input type="text" id="recipientName" placeholder="Their beautiful name...">
+                </div>
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="senderName" placeholder="Your name...">
+                </div>
+                <div class="form-group">
+                    <label>Relationship</label>
+                    <select id="relationship">
+                        <option value="romantic">Romantic Partner</option>
+                        <option value="friend">Best Friend</option>
+                        <option value="family">Family Member</option>
+                        <option value="crush">Secret Crush</option>
+                        <option value="spouse">Spouse</option>
+                    </select>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Theme Selection -->
+            <div class="builder-section" id="step2">
+                <h2 class="text-center color-white mb-2">Choose Your Theme 🎨</h2>
+                <div class="theme-grid">
+                    <div class="theme-card" onclick="selectTheme('classic-red')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #c31432 0%, #240b36 100%);"></div>
+                        <div>Classic Red</div>
+                    </div>
+                    <div class="theme-card" onclick="selectTheme('soft-pink')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);"></div>
+                        <div>Soft Pink</div>
+                    </div>
+                    <div class="theme-card" onclick="selectTheme('minimal')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);"></div>
+                        <div>Minimal</div>
+                    </div>
+                    <div class="theme-card" onclick="selectTheme('dark-romance')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #2c1a3e 0%, #000000 100%);"></div>
+                        <div>Dark Romance</div>
+                    </div>
+                    <div class="theme-card" onclick="selectTheme('cute-cartoon')">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);"></div>
+                        <div>Cute Cartoon</div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn" onclick="nextStep(1)">← Back</button>
+                    <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Rose Count -->
+            <div class="builder-section" id="step3">
+                <h2 class="text-center color-white mb-2">How Many Roses? 🌹</h2>
+                <p class="text-center color-white mb-2">Each rose will carry a special meaning</p>
+                <div class="number-input">
+                    <button onclick="changeRoseCount(-1)">-</button>
+                    <div class="number-display" id="roseCount">5</div>
+                    <button onclick="changeRoseCount(1)">+</button>
+                </div>
+                <div class="text-center" style="margin-top: 2rem;">
+                    <button class="btn" onclick="nextStep(2)">← Back</button>
+                    <button class="btn btn-primary" onclick="nextStep(4)">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Design Roses -->
+            <div class="builder-section" id="step4">
+                <h2 class="text-center color-white mb-2">Design Your Roses 🌹</h2>
+                <p class="text-center color-white mb-2">Click each rose to add a meaning and message</p>
+                <div class="rose-grid" id="roseGrid"></div>
+                <div class="text-center">
+                    <button class="btn" onclick="nextStep(3)">← Back</button>
+                    <button class="btn btn-primary" onclick="nextStep(5)">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Final Settings -->
+            <div class="builder-section" id="step5">
+                <h2 class="text-center color-white mb-2">Final Touches ✨</h2>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="addMusic" style="width: auto; margin-right: 0.5rem;">
+                        Add Background Music
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="secretMode" style="width: auto; margin-right: 0.5rem;">
+                        Secret Sender Mode (Hide your name)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="oneTimeView" style="width: auto; margin-right: 0.5rem;">
+                        One-Time View Only
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Page Expiry (Optional)</label>
+                    <input type="date" id="expiryDate">
+                </div>
+                <div class="text-center">
+                    <button class="btn" onclick="nextStep(4)">← Back</button>
+                    <button class="btn btn-primary" onclick="generateSite()">Generate My Site 🎉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview & Share Section -->
+    <div id="shareSection" class="container hidden">
+        <div class="glass-card">
+            <h2 class="text-center color-white mb-2">Your Rose Garden is Ready! 🎉</h2>
+            
+            <div class="preview-container">
+                <button class="btn btn-primary" onclick="showPreview()">👀 Preview Your Site</button>
+            </div>
+
+            <h3 class="text-center color-white mb-2" style="margin-top: 2rem;">Share Your Love</h3>
+            <div class="share-options">
+                <div class="share-card" onclick="shareWhatsApp()">
+                    <div class="share-icon">💬</div>
+                    <div class="color-white">WhatsApp</div>
+                </div>
+                <div class="share-card" onclick="showQR()">
+                    <div class="share-icon">📱</div>
+                    <div class="color-white">QR Code</div>
+                </div>
+                <div class="share-card" onclick="copyLink()">
+                    <div class="share-icon">🔗</div>
+                    <div class="color-white">Copy Link</div>
+                </div>
+                <div class="share-card" onclick="scheduleDelivery()">
+                    <div class="share-icon">⏰</div>
+                    <div class="color-white">Schedule</div>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-top: 2rem;">
+                <div class="glass-card" style="display: inline-block; padding: 1rem 2rem;">
+                    <p class="color-white" style="margin-bottom: 0.5rem;">Your Private Link:</p>
+                    <code id="generatedLink" style="color: #ff6b9d; font-size: 0.9rem; word-break: break-all;">https://rosecraft.love/r/xxxxx</code>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-top: 2rem;">
+                <button class="btn" onclick="resetBuilder()">Create Another 🌹</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rose Editor Modal -->
+    <div class="modal" id="roseModal">
+        <div class="modal-content glass-card">
+            <h2 class="text-center color-white mb-2" id="modalTitle">Edit Rose</h2>
+            <div class="form-group">
+                <label>Rose Meaning</label>
+                <select id="roseMeaning">
+                    <option value="love">❤️ Love</option>
+                    <option value="admiration">⭐ Admiration</option>
+                    <option value="trust">🤝 Trust</option>
+                    <option value="friendship">🫂 Friendship</option>
+                    <option value="dreams">💭 Dreams</option>
+                    <option value="mystery">🌙 Mystery</option>
+                    <option value="forever">♾️ Forever</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Your Message</label>
+                <textarea id="roseMessage" rows="4" placeholder="Write your heartfelt message..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Add Emoji (Optional)</label>
+                <input type="text" id="roseEmoji" placeholder="🌹 💕 ✨">
+            </div>
+            <div class="text-center">
+                <button class="btn" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveRose()">Save Rose 🌹</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Mode -->
+    <div class="view-mode" id="viewMode">
+        <div class="view-header">
+            <h1 id="viewTitle">A Garden of Roses for You</h1>
+            <p id="viewSubtitle">From someone who cares</p>
+        </div>
+        <div class="roses-display" id="rosesDisplay"></div>
+    </div>
+
+    <!-- Rose View Modal -->
+    <div class="modal" id="viewRoseModal">
+        <div class="modal-content glass-card">
+            <div style="text-align: center; font-size: 4rem; margin-bottom: 1rem;" id="viewRoseIcon">🌹</div>
+            <h2 class="text-center color-white mb-2" id="viewRoseMeaning">Love</h2>
+            <p class="color-white" style="text-align: center; font-size: 1.1rem; line-height: 1.6;" id="viewRoseMessage"></p>
+            <div class="text-center" style="margin-top: 2rem;">
+                <button class="btn btn-primary" onclick="closeViewModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let currentStep = 1;
+        let selectedTheme = 'classic-red';
+        let roseCountValue = 5;
+        let roses = [];
+        let currentRoseIndex = -1;
+
+        // Create floating petals
+        function createPetals() {
+            const container = document.getElementById('animatedBg');
+            for (let i = 0; i < 30; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                petal.style.animationDelay = Math.random() * 5 + 's';
+                petal.style.width = (Math.random() * 15 + 10) + 'px';
+                petal.style.height = petal.style.width;
+                container.appendChild(petal);
+            }
+        }
+
+        createPetals();
+
+        // Navigation
+        function startBuilder() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('builderSection').classList.remove('hidden');
+        }
+
+        function nextStep(step) {
+            // Hide current step
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('stepIndicator' + currentStep).classList.remove('active');
+            document.getElementById('stepIndicator' + currentStep).classList.add('completed');
+
+            // Show next step
+            currentStep = step;
+            document.getElementById('step' + step).classList.add('active');
+            document.getElementById('stepIndicator' + step).classList.add('active');
+
+            // Generate rose grid when entering step 4
+            if (step === 4) {
+                generateRoseGrid();
+            }
+        }
+
+        function selectTheme(theme) {
+            selectedTheme = theme;
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.theme-card').classList.add('selected');
+            
+            // Update background
+            const bg = document.getElementById('animatedBg');
+            bg.className = 'animated-bg ' + theme;
+        }
+
+        function changeRoseCount(delta) {
+            roseCountValue = Math.max(1, Math.min(20, roseCountValue + delta));
+            document.getElementById('roseCount').textContent = roseCountValue;
+        }
+
+        function generateRoseGrid() {
+            const grid = document.getElementById('roseGrid');
+            grid.innerHTML = '';
+            roses = [];
+
+            for (let i = 0; i < roseCountValue; i++) {
+                roses.push({
+                    meaning: 'love',
+                    message: '',
+                    emoji: '🌹'
+                });
+
+                const roseItem = document.createElement('div');
+                roseItem.className = 'rose-item';
+                roseItem.onclick = () => editRose(i);
+                roseItem.innerHTML = `
+                    <div class="rose-icon" id="roseIcon${i}">🌹</div>
+                    <div class="rose-label" id="roseLabel${i}">Rose ${i + 1}</div>
+                `;
+                grid.appendChild(roseItem);
+            }
+        }
+
+        function editRose(index) {
+            currentRoseIndex = index;
+            const rose = roses[index];
+            
+            document.getElementById('roseMeaning').value = rose.meaning;
+            document.getElementById('roseMessage').value = rose.message;
+            document.getElementById('roseEmoji').value = rose.emoji;
+            document.getElementById('modalTitle').textContent = `Edit Rose ${index + 1}`;
+            
+            document.getElementById('roseModal').classList.add('active');
+        }
+
+        function saveRose() {
+            const rose = roses[currentRoseIndex];
+            rose.meaning = document.getElementById('roseMeaning').value;
+            rose.message = document.getElementById('roseMessage').value;
+            rose.emoji = document.getElementById('roseEmoji').value || '🌹';
+
+            // Update display
+            const meaningText = document.getElementById('roseMeaning').selectedOptions[0].textContent;
+            document.getElementById('roseIcon' + currentRoseIndex).textContent = rose.emoji;
+            document.getElementById('roseLabel' + currentRoseIndex).textContent = meaningText.split(' ')[1];
+
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('roseModal').classList.remove('active');
+        }
+
+        function generateSite() {
+            // Generate unique ID
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            
+            // Store data
+            const siteData = {
+                recipientName: document.getElementById('recipientName').value,
+                senderName: document.getElementById('senderName').value,
+                relationship: document.getElementById('relationship').value,
+                theme: selectedTheme,
+                roses: roses,
+                settings: {
+                    music: document.getElementById('addMusic').checked,
+                    secret: document.getElementById('secretMode').checked,
+                    oneTime: document.getElementById('oneTimeView').checked,
+                    expiry: document.getElementById('expiryDate').value
+                }
+            };
+
+            localStorage.setItem('rosecraft_' + uniqueId, JSON.stringify(siteData));
+
+            // Show share section
+            document.getElementById('builderSection').classList.add('hidden');
+            document.getElementById('shareSection').classList.remove('hidden');
+            document.getElementById('generatedLink').textContent = `https://rosecraft.love/r/${uniqueId}`;
+        }
+
+        function showPreview() {
+            const recipientName = document.getElementById('recipientName').value;
+            const senderName = document.getElementById('senderName').value;
+            
+            document.getElementById('viewTitle').textContent = `A Garden of Roses for ${recipientName}`;
+            document.getElementById('viewSubtitle').textContent = `From ${senderName} with love`;
+            
+            // Generate roses display
+            const display = document.getElementById('rosesDisplay');
+            display.innerHTML = '';
+            
+            roses.forEach((rose, index) => {
+                const div = document.createElement('div');
+                div.className = 'view-rose';
+                div.onclick = () => viewRose(index);
+                div.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">${rose.emoji}</div>
+                    <div class="color-white" style="font-weight: 600;">${getMeaningText(rose.meaning)}</div>
+                `;
+                display.appendChild(div);
+            });
+
+            document.getElementById('viewMode').classList.add('active');
+        }
+
+        function viewRose(index) {
+            const rose = roses[index];
+            document.getElementById('viewRoseIcon').textContent = rose.emoji;
+            document.getElementById('viewRoseMeaning').textContent = getMeaningText(rose.meaning);
+            document.getElementById('viewRoseMessage').textContent = rose.message || 'This rose represents ' + getMeaningText(rose.meaning).toLowerCase();
+            document.getElementById('viewRoseModal').classList.add('active');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewRoseModal').classList.remove('active');
+        }
+
+        function getMeaningText(meaning) {
+            const meanings = {
+                love: 'Love',
+                admiration: 'Admiration',
+                trust: 'Trust',
+                friendship: 'Friendship',
+                dreams: 'Dreams',
+                mystery: 'Mystery',
+                forever: 'Forever'
+            };
+            return meanings[meaning] || 'Love';
+        }
+
+        // Share Functions
+        function shareWhatsApp() {
+            const link = document.getElementById('generatedLink').textContent;
+            const text = `I created a special rose garden just for you! 🌹✨\n\n${link}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function copyLink() {
+            const link = document.getElementById('generatedLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Link copied to clipboard! 🎉');
+            });
+        }
+
+        function showQR() {
+            alert('QR Code feature would generate a scannable code here! 📱');
+        }
+
+        function scheduleDelivery() {
+            alert('Schedule delivery feature would allow you to set a specific date and time! ⏰');
+        }
+
+        function resetBuilder() {
+            location.reload();
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
