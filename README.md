@@ -2,7 +2,7 @@
 
 RoseCraft is a beautiful, interactive web application that allows you to create deeply personal rose-themed webpages for your loved ones. Perfect for Rose Day, anniversaries, or just to show someone you care.
 
-Demo: [https://rosecraft.vercel.app/](https://rosecraft.netlify.app/)
+Demo: [https://rosecraft.netlify.app/](https://rosecraft.netlify.app/)
 
 ## ✨ Features
 
