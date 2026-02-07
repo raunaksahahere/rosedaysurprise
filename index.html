@@ -1,9 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+<!--
+    ╔══════════════════════════════════════════════════════════════════════════╗
+    ║                         ROSECRAFT CONFIGURATION                          ║
+    ╚══════════════════════════════════════════════════════════════════════════╝
+    
+    🔧 SETUP INSTRUCTIONS:
+    
+    1. Create a Supabase account at https://supabase.com
+    2. Create a new project
+    3. Create a table named 'rose_pages' with this SQL:
+    
+       CREATE TABLE rose_pages (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         data JSONB NOT NULL,
+         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+         view_count INTEGER DEFAULT 0
+       );
+       
+       -- Enable Row Level Security
+       ALTER TABLE rose_pages ENABLE ROW LEVEL SECURITY;
+       
+       -- Allow anyone to read rose pages
+       CREATE POLICY "Anyone can view rose pages"
+         ON rose_pages FOR SELECT
+         USING (true);
+       
+       -- Allow anyone to create rose pages
+       CREATE POLICY "Anyone can create rose pages"
+         ON rose_pages FOR INSERT
+         WITH CHECK (true);
+    
+    4. Get your Supabase URL and anon key from Project Settings > API
+    5. Replace the placeholders in the JavaScript below:
+       - SUPABASE_URL: Your project URL
+       - SUPABASE_ANON_KEY: Your anon/public key
+    
+    6. Deploy this HTML file to a hosting service (Vercel, Netlify, etc.)
+    
+    ⚠️ IMPORTANT: Configure URL routing on your host to redirect /r/* to index.html
+       Example (Netlify): Create _redirects file with:
+       /r/*  /index.html  200
+    
+-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RoseCraft - Create Your Personal Rose Day Website</title>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -330,14 +375,32 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
-            z-index: 1000;
+            z-index: 3000;
             align-items: center;
             justify-content: center;
             padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .modal.active {
-            display: flex;
+            display: flex !important;
+            opacity: 1;
+        }
+        
+        .modal.active .modal-content {
+            animation: modalContentPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes modalContentPop {
+            from { 
+                opacity: 0; 
+                transform: scale(0.8) translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            }
         }
 
         .modal-content {
@@ -433,19 +496,44 @@
         .view-rose {
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 1rem;
+            transition: all 0.4s ease;
+            padding: 1.5rem;
             border-radius: 15px;
             background: rgba(255, 255, 255, 0.1);
+            animation: roseAppear 0.6s ease forwards;
+            opacity: 0;
+            transform: scale(0.5) translateY(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes roseAppear {
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .view-rose:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.15) rotate(5deg);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.4);
+            border-color: rgba(255, 107, 157, 0.6);
+        }
+
+        .view-rose:active {
+            transform: scale(1.05);
         }
 
         .view-rose.opened {
-            opacity: 0.5;
+            opacity: 0.4;
+            cursor: default;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .view-rose.opened:hover {
+            transform: scale(1);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
         }
 
         /* Responsive */
@@ -640,7 +728,8 @@
             <!-- Step 4: Design Roses -->
             <div class="builder-section" id="step4">
                 <h2 class="text-center color-white mb-2">Design Your Roses 🌹</h2>
-                <p class="text-center color-white mb-2">Click each rose to add a meaning and message</p>
+                <p class="text-center color-white" style="margin-bottom: 0.5rem;">Click each rose to add a personal meaning and message</p>
+                <p class="text-center color-white" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 2rem;">✓ = Customized</p>
                 <div class="rose-grid" id="roseGrid"></div>
                 <div class="text-center">
                     <button class="btn" onclick="nextStep(3)">← Back</button>
@@ -740,12 +829,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Your Message</label>
-                <textarea id="roseMessage" rows="4" placeholder="Write your heartfelt message..."></textarea>
+                <label>Your Personal Message <span style="color: #ff6b9d;">*</span></label>
+                <textarea id="roseMessage" rows="4" placeholder="Write what this rose means to you... This is what they'll see when they click it! 💕"></textarea>
             </div>
             <div class="form-group">
-                <label>Add Emoji (Optional)</label>
-                <input type="text" id="roseEmoji" placeholder="🌹 💕 ✨">
+                <label>Custom Emoji (Optional)</label>
+                <input type="text" id="roseEmoji" placeholder="🌹 💕 ✨ 💖 🌺">
             </div>
             <div class="text-center">
                 <button class="btn" onclick="closeModal()">Cancel</button>
@@ -756,26 +845,225 @@
 
     <!-- View Mode -->
     <div class="view-mode" id="viewMode">
+        <button class="btn" onclick="closeViewMode()" style="position: fixed; top: 20px; right: 20px; z-index: 2001;">✕ Close Preview</button>
         <div class="view-header">
             <h1 id="viewTitle">A Garden of Roses for You</h1>
             <p id="viewSubtitle">From someone who cares</p>
+            <p class="color-white" style="opacity: 0.8; margin-top: 1rem; font-size: 0.95rem;">Click each rose to reveal its message 💕</p>
         </div>
         <div class="roses-display" id="rosesDisplay"></div>
     </div>
 
     <!-- Rose View Modal -->
     <div class="modal" id="viewRoseModal">
-        <div class="modal-content glass-card">
-            <div style="text-align: center; font-size: 4rem; margin-bottom: 1rem;" id="viewRoseIcon">🌹</div>
+        <div class="modal-content glass-card" style="max-width: 500px; position: relative;">
+            <button onclick="closeViewModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; opacity: 0.8; z-index: 10;">&times;</button>
+            <div style="text-align: center; font-size: 5rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite;" id="viewRoseIcon">🌹</div>
             <h2 class="text-center color-white mb-2" id="viewRoseMeaning">Love</h2>
-            <p class="color-white" style="text-align: center; font-size: 1.1rem; line-height: 1.6;" id="viewRoseMessage"></p>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 1.5rem; border-radius: 15px; margin: 1.5rem 0; max-height: 40vh; overflow-y: auto;">
+                <p class="color-white" style="text-align: center; font-size: 1.15rem; line-height: 1.8; font-style: italic; white-space: pre-wrap;" id="viewRoseMessage"></p>
+            </div>
             <div class="text-center" style="margin-top: 2rem;">
-                <button class="btn btn-primary" onclick="closeViewModal()">Close</button>
+                <button class="btn btn-primary" onclick="closeViewModal()">Close 💕</button>
             </div>
         </div>
     </div>
 
     <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://iubmfcxwvuplbhoyvqus.supabase.co'; // Replace with your Supabase URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1Ym1mY3h3dnVwbGJob3l2cXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NjEyNzQsImV4cCI6MjA4NjAzNzI3NH0.BEiOg20fZwUbzOdExYm76ovt8dJ3MOo7KMFwvu5N0kI'; // Replace with your Supabase anon key
+        
+        let supabaseClient = null;
+        let useSupabase = false;
+        
+        // Initialize Supabase client
+        function initSupabase() {
+            // Check if credentials are configured
+            
+            if (typeof window.supabase === 'undefined') {
+                console.error('Supabase SDK not loaded');
+                useSupabase = false;
+                return false;
+            }
+            
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase initialized successfully');
+                useSupabase = true;
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+                useSupabase = false;
+                return false;
+            }
+        }
+        
+        // ============================================
+        // ROUTE DETECTION & PAGE LOADING
+        // ============================================
+        async function loadSharedRosePage() {
+            const path = window.location.pathname;
+            const match = path.match(/\/r\/([a-zA-Z0-9_-]+)/);
+            
+            if (!match) {
+                return false; // Not a shared link
+            }
+            
+            const pageId = match[1];
+            console.log('Loading rose page:', pageId);
+            
+            // Show loading state
+            showLoadingState();
+            
+            try {
+                let pageData = null;
+                
+                if (useSupabase) {
+                    // Load from Supabase
+                    const { data, error } = await supabaseClient
+                        .from('rose_pages')
+                        .select('*')
+                        .eq('id', pageId)
+                        .single();
+                    
+                    if (error) {
+                        console.error('Supabase error:', error);
+                        // Try localStorage fallback
+                        pageData = loadFromLocalStorage(pageId);
+                    } else if (data) {
+                        pageData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                    }
+                } else {
+                    // Load from localStorage
+                    pageData = loadFromLocalStorage(pageId);
+                }
+                
+                if (!pageData) {
+                    showErrorState('This rose garden does not exist or has been removed. 🥀');
+                    return true;
+                }
+                
+                // Load the data
+                loadRosePageData(pageData);
+                return true;
+                
+            } catch (error) {
+                console.error('Error loading rose page:', error);
+                showErrorState('Failed to load this rose garden. Please try again later. 🥀');
+                return true;
+            }
+        }
+        
+        function loadFromLocalStorage(pageId) {
+            const stored = localStorage.getItem('rosecraft_' + pageId);
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    console.error('Failed to parse localStorage data:', e);
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        function showLoadingState() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('builderSection').classList.add('hidden');
+            document.getElementById('shareSection').classList.add('hidden');
+            
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="glass-card text-center">
+                    <div class="loading">
+                        <div class="rose-logo">🌹</div>
+                        <h2 class="color-white mb-2">Loading your rose garden...</h2>
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showErrorState(message) {
+            const viewMode = document.getElementById('viewMode');
+            viewMode.innerHTML = `
+                <div class="view-header">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🥀</div>
+                    <h1>Oops!</h1>
+                    <p>${message}</p>
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-primary" onclick="window.location.href='/'">Create Your Own Rose Garden</button>
+                    </div>
+                </div>
+            `;
+            viewMode.classList.add('active');
+        }
+        
+        function loadRosePageData(pageData) {
+            console.log('Loading page data:', pageData);
+            
+            // Populate global state
+            roses = pageData.roses || [];
+            selectedTheme = pageData.theme || 'classic-red';
+            
+            // Update background theme
+            const bg = document.getElementById('animatedBg');
+            bg.className = 'animated-bg ' + selectedTheme;
+            
+            // Set recipient and sender names
+            const recipientName = pageData.recipientName || 'You';
+            const senderName = pageData.senderName || 'Someone special';
+            const secretMode = pageData.settings?.secret || false;
+            
+            // Update view mode header
+            document.getElementById('viewTitle').textContent = `A Garden of Roses for ${recipientName}`;
+            document.getElementById('viewSubtitle').textContent = secretMode ? 'From someone who cares 💕' : `From ${senderName} with love`;
+            
+            // Generate roses display
+            const display = document.getElementById('rosesDisplay');
+            display.innerHTML = '';
+            
+            roses.forEach((rose, index) => {
+                const div = document.createElement('div');
+                div.className = 'view-rose';
+                div.style.animationDelay = (index * 0.1) + 's';
+                div.setAttribute('data-index', index);
+                
+                div.innerHTML = `
+                    <div style="font-size: 3.5rem; margin-bottom: 0.5rem; pointer-events: none;">${rose.emoji || '🌹'}</div>
+                    <div class="color-white" style="font-size: 0.8rem; opacity: 0.7; pointer-events: none;">Tap to reveal</div>
+                `;
+                
+                div.addEventListener('click', function() {
+                    viewRose(parseInt(this.getAttribute('data-index')));
+                });
+                
+                display.appendChild(div);
+            });
+            
+            // Show view mode (hide all other sections)
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('builderSection').classList.add('hidden');
+            document.getElementById('shareSection').classList.add('hidden');
+            document.getElementById('viewMode').classList.add('active');
+            
+            // Track page view (optional)
+            trackPageView(pageData);
+        }
+        
+        async function trackPageView(pageData) {
+            // Optional: Track that someone opened the page
+            // This could update a view_count column in Supabase
+            console.log('Rose page viewed');
+        }
+        
+        // ============================================
+        // ORIGINAL CODE BELOW
+        // ============================================
+        
         // Global State
         let currentStep = 1;
         let selectedTheme = 'classic-red';
@@ -848,7 +1136,7 @@
             for (let i = 0; i < roseCountValue; i++) {
                 roses.push({
                     meaning: 'love',
-                    message: '',
+                    message: 'Click to add your personal message 💕',
                     emoji: '🌹'
                 });
 
@@ -867,65 +1155,178 @@
             currentRoseIndex = index;
             const rose = roses[index];
             
-            document.getElementById('roseMeaning').value = rose.meaning;
-            document.getElementById('roseMessage').value = rose.message;
-            document.getElementById('roseEmoji').value = rose.emoji;
+            const messageField = document.getElementById('roseMessage');
+            const meaningField = document.getElementById('roseMeaning');
+            const emojiField = document.getElementById('roseEmoji');
+            
+            meaningField.value = rose.meaning;
+            emojiField.value = rose.emoji;
+            
+            // Clear the default placeholder message when editing
+            if (rose.message === 'Click to add your personal message 💕') {
+                messageField.value = '';
+            } else {
+                messageField.value = rose.message;
+            }
+            
             document.getElementById('modalTitle').textContent = `Edit Rose ${index + 1}`;
             
-            document.getElementById('roseModal').classList.add('active');
+            const modal = document.getElementById('roseModal');
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+            
+            // Auto-focus on message field
+            setTimeout(() => messageField.focus(), 100);
         }
 
         function saveRose() {
             const rose = roses[currentRoseIndex];
             rose.meaning = document.getElementById('roseMeaning').value;
-            rose.message = document.getElementById('roseMessage').value;
+            rose.message = document.getElementById('roseMessage').value.trim();
+            
+            // Ensure there's always a message
+            if (!rose.message) {
+                rose.message = "This rose holds feelings too deep for words 💕";
+            }
+            
             rose.emoji = document.getElementById('roseEmoji').value || '🌹';
 
             // Update display
             const meaningText = document.getElementById('roseMeaning').selectedOptions[0].textContent;
-            document.getElementById('roseIcon' + currentRoseIndex).textContent = rose.emoji;
-            document.getElementById('roseLabel' + currentRoseIndex).textContent = meaningText.split(' ')[1];
+            const roseIcon = document.getElementById('roseIcon' + currentRoseIndex);
+            const roseLabel = document.getElementById('roseLabel' + currentRoseIndex);
+            
+            if (roseIcon) roseIcon.textContent = rose.emoji;
+            if (roseLabel) {
+                roseLabel.textContent = meaningText.split(' ')[1];
+                // Add checkmark to show it's been customized
+                roseLabel.innerHTML = meaningText.split(' ')[1] + ' ✓';
+            }
 
             closeModal();
         }
 
         function closeModal() {
-            document.getElementById('roseModal').classList.remove('active');
+            const modal = document.getElementById('roseModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
         }
 
-        function generateSite() {
-            // Generate unique ID
-            const uniqueId = Math.random().toString(36).substr(2, 9);
+        async function generateSite() {
+            // Check if all roses have been personalized
+            const uncustomizedRoses = roses.filter(r => 
+                r.message === 'Click to add your personal message 💕' || 
+                r.message === 'This rose holds feelings too deep for words 💕'
+            );
             
-            // Store data
-            const siteData = {
-                recipientName: document.getElementById('recipientName').value,
-                senderName: document.getElementById('senderName').value,
-                relationship: document.getElementById('relationship').value,
-                theme: selectedTheme,
-                roses: roses,
-                settings: {
-                    music: document.getElementById('addMusic').checked,
-                    secret: document.getElementById('secretMode').checked,
-                    oneTime: document.getElementById('oneTimeView').checked,
-                    expiry: document.getElementById('expiryDate').value
+            if (uncustomizedRoses.length > 0) {
+                const proceed = confirm(`You have ${uncustomizedRoses.length} rose(s) that haven't been personalized yet. Would you like to go back and add custom messages?`);
+                if (proceed) {
+                    nextStep(4); // Go back to rose editing
+                    return;
                 }
-            };
+            }
+            
+            // Show loading
+            const generateBtn = event.target;
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating... 🌹';
+            
+            try {
+                // Prepare data
+                const siteData = {
+                    recipientName: document.getElementById('recipientName').value,
+                    senderName: document.getElementById('senderName').value,
+                    relationship: document.getElementById('relationship').value,
+                    theme: selectedTheme,
+                    roses: roses,
+                    settings: {
+                        music: document.getElementById('addMusic').checked,
+                        secret: document.getElementById('secretMode').checked,
+                        oneTime: document.getElementById('oneTimeView').checked,
+                        expiry: document.getElementById('expiryDate').value
+                    }
+                };
+                
+                let pageId;
+                const baseUrl = window.location.origin;
+                
+                if (useSupabase) {
+                    // Generate unique ID
+                    const uniqueId = crypto.randomUUID();
+                    console.log("Generated ID:", uniqueId);
 
-            localStorage.setItem('rosecraft_' + uniqueId, JSON.stringify(siteData));
+                    if (!uniqueId) {
+                        alert("Failed to generate page ID");
+                        return;
+                    }
 
-            // Show share section
-            document.getElementById('builderSection').classList.add('hidden');
-            document.getElementById('shareSection').classList.remove('hidden');
-            document.getElementById('generatedLink').textContent = `https://rosecraft.love/r/${uniqueId}`;
+                    // Save to Supabase
+                    const { data, error } = await supabaseClient
+                        .from('rose_pages')
+                        .insert([
+                            {
+                                id: uniqueId,
+                                data: siteData,
+                                created_at: new Date().toISOString()
+                            }
+                        ])
+                        .select()
+                        .single();
+                    
+                    if (error) {
+                        console.error('Supabase error:', error);
+                        alert('Failed to generate your rose garden. Please try again.');
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = 'Generate My Site 🎉';
+                        return;
+                    }
+                    
+                    pageId = data.id;
+                    
+                    // Also save to localStorage as backup
+                    localStorage.setItem('rosecraft_' + pageId, JSON.stringify(siteData));
+                    
+                } else {
+                    // Fallback to localStorage only
+                    pageId = Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('rosecraft_' + pageId, JSON.stringify(siteData));
+                    console.log('Saved to localStorage (Supabase not configured)');
+                }
+                
+                const shareableLink = `${baseUrl}/r/${pageId}`;
+                
+                // Show share section
+                document.getElementById('builderSection').classList.add('hidden');
+                document.getElementById('shareSection').classList.remove('hidden');
+                document.getElementById('generatedLink').textContent = shareableLink;
+                
+                console.log('Rose page created successfully:', pageId);
+                
+                if (!useSupabase) {
+                    // Show warning about localStorage limitations
+                    setTimeout(() => {
+                        alert('⚠️ Note: This link will only work on this browser. To share with others, please configure Supabase (see HTML comments for instructions).');
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('Error generating site:', error);
+                alert('An error occurred. Please try again.');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate My Site 🎉';
+            }
         }
 
         function showPreview() {
             const recipientName = document.getElementById('recipientName').value;
             const senderName = document.getElementById('senderName').value;
+            const secretMode = document.getElementById('secretMode').checked;
             
             document.getElementById('viewTitle').textContent = `A Garden of Roses for ${recipientName}`;
-            document.getElementById('viewSubtitle').textContent = `From ${senderName} with love`;
+            document.getElementById('viewSubtitle').textContent = secretMode ? 'From someone who cares' : `From ${senderName} with love`;
             
             // Generate roses display
             const display = document.getElementById('rosesDisplay');
@@ -934,11 +1335,20 @@
             roses.forEach((rose, index) => {
                 const div = document.createElement('div');
                 div.className = 'view-rose';
-                div.onclick = () => viewRose(index);
+                div.style.animationDelay = (index * 0.1) + 's'; // Stagger appearance
+                div.setAttribute('data-index', index);
+                
+                // Only show rose emoji, no text initially
                 div.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">${rose.emoji}</div>
-                    <div class="color-white" style="font-weight: 600;">${getMeaningText(rose.meaning)}</div>
+                    <div style="font-size: 3.5rem; margin-bottom: 0.5rem; pointer-events: none;">${rose.emoji}</div>
+                    <div class="color-white" style="font-size: 0.8rem; opacity: 0.7; pointer-events: none;">Tap to reveal</div>
                 `;
+                
+                // Add click event listener
+                div.addEventListener('click', function() {
+                    viewRose(parseInt(this.getAttribute('data-index')));
+                });
+                
                 display.appendChild(div);
             });
 
@@ -947,14 +1357,41 @@
 
         function viewRose(index) {
             const rose = roses[index];
-            document.getElementById('viewRoseIcon').textContent = rose.emoji;
-            document.getElementById('viewRoseMeaning').textContent = getMeaningText(rose.meaning);
-            document.getElementById('viewRoseMessage').textContent = rose.message || 'This rose represents ' + getMeaningText(rose.meaning).toLowerCase();
-            document.getElementById('viewRoseModal').classList.add('active');
+            
+            // Mark rose as opened
+            const roseElements = document.querySelectorAll('.view-rose');
+            if (roseElements[index]) {
+                roseElements[index].classList.add('opened');
+            }
+            
+            // Show the message in modal
+            const iconEl = document.getElementById('viewRoseIcon');
+            const meaningEl = document.getElementById('viewRoseMeaning');
+            const messageEl = document.getElementById('viewRoseMessage');
+            const modalEl = document.getElementById('viewRoseModal');
+            
+            if (iconEl) iconEl.textContent = rose.emoji;
+            if (meaningEl) meaningEl.textContent = getMeaningText(rose.meaning);
+            if (messageEl) {
+                // Display the actual saved message from the sender
+                messageEl.textContent = rose.message;
+            }
+            if (modalEl) {
+                modalEl.classList.add('active');
+                modalEl.style.display = 'flex';
+            }
         }
 
         function closeViewModal() {
-            document.getElementById('viewRoseModal').classList.remove('active');
+            const modal = document.getElementById('viewRoseModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+        }
+
+        function closeViewMode() {
+            document.getElementById('viewMode').classList.remove('active');
         }
 
         function getMeaningText(meaning) {
@@ -1000,8 +1437,33 @@
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.classList.remove('active');
+                event.target.style.display = 'none';
             }
         }
+        
+        // ============================================
+        // PAGE INITIALIZATION
+        // ============================================
+        window.addEventListener('DOMContentLoaded', async function() {
+            console.log('Page loaded, checking route...');
+            
+            // Initialize Supabase
+            const supabaseReady = initSupabase();
+            
+            if (supabaseReady) {
+                // Check if this is a shared link
+                const isSharedLink = await loadSharedRosePage();
+                
+                if (isSharedLink) {
+                    // Page loaded from Supabase, don't show landing
+                    console.log('Shared rose page loaded');
+                    return;
+                }
+            }
+            
+            // Normal flow - show landing page
+            console.log('Normal page load - showing landing screen');
+        });
     </script>
 </body>
 </html>
